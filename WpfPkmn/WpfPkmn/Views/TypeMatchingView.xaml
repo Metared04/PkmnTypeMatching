@@ -53,7 +53,8 @@
                   Grid.Row="3"
                   Grid.Column="2"
                   Grid.ColumnSpan="2"
-                  VerticalAlignment="Center"/>
+                  VerticalAlignment="Center"
+                  HorizontalContentAlignment="Center"/>
         <Button 
             Content="Valider" 
             Command="{Binding ExecuteDisplayFirstType}" 
@@ -74,6 +75,10 @@
         <TextBlock Text="Type(s) resistant :"
                    Grid.Row="7"
                    Grid.Column="1"/>
+        <TextBlock Text="{Binding Account}"
+                   Grid.Row="7"
+                   Grid.Column="5"
+                   HorizontalAlignment="Center"/>
         <ListView ItemsSource="{Binding ResistingTypes}"
                   Grid.Row="8"
                   Grid.Column="1"
@@ -93,6 +98,22 @@
                   Grid.Row="8"
                   Grid.Column="2"
                   HorizontalContentAlignment="Center">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Name}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <TextBlock Text="Double type resistant :"
+           Grid.Row="7"
+           Grid.Column="4"/>
+        <ListView ItemsSource="{Binding ResistingDoubleTypes}"
+          Grid.Row="8"
+          Grid.Column="4"
+          Grid.ColumnSpan="2"
+          HorizontalContentAlignment="Center">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">

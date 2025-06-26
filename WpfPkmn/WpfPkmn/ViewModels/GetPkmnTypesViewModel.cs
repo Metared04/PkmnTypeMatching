@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -16,12 +17,14 @@ namespace WpfPkmn.ViewModels
         //Champs
         private OptionItem _selectedFirstType;
         private OptionItem _selectedSecondType;
+        private int _account;
 
         public ObservableCollection<OptionItem> FirstType { get; set; }
         public ObservableCollection<OptionItem> SecondType { get; set; }
 
         public ObservableCollection<TypeDisplayItem> ResistingTypes { get; set; }
         public ObservableCollection<TypeDisplayItem> NotResistingTypes { get; set; }
+        public ObservableCollection<TypeDisplayItem> ResistingDoubleTypes { get; set; }
 
         //Proprietes
         public OptionItem SelectedFirstType
@@ -46,6 +49,19 @@ namespace WpfPkmn.ViewModels
             }
         }
 
+        public int Account
+        {
+            get => _account;
+            set
+            {
+                if (_account != value)
+                {
+                    _account = value;
+                    OnPropertyChanged(nameof(Account));
+                }
+            }
+}
+
         //Commandes
         public ICommand ExecuteDisplayFirstType { get; }
         public ICommand ExecuteDisplayPkmnResistances { get; }
@@ -57,6 +73,8 @@ namespace WpfPkmn.ViewModels
             SecondType = new ObservableCollection<OptionItem>();
             ResistingTypes = new ObservableCollection<TypeDisplayItem>();
             NotResistingTypes = new ObservableCollection<TypeDisplayItem>();
+            ResistingDoubleTypes = new ObservableCollection<TypeDisplayItem>();
+            Account = 0;
             ExecuteDisplayFirstType = new ViewModelCommand(ExecuteDisplayFirstTypeAction, CanExecuteDisplayFirstTypeAction);
             ExecuteDisplayPkmnResistances = new ViewModelCommand(ExecuteDisplayPkmnResistancesAction, CanExecuteDisplayPkmnResistancesAction);
             LoadPkmnType();
@@ -129,6 +147,23 @@ namespace WpfPkmn.ViewModels
             };
         }
 
+        public static List<Pokemon> FilterDuplicate(List<Pokemon> allDoubleTypes)
+        {
+            var filteredList = new List<Pokemon>(allDoubleTypes);
+            for (int i = 0; i < allDoubleTypes.Count; i++)
+            {
+                for (int j = filteredList.Count - 1; j >= 0; j--)
+                {
+                    if (allDoubleTypes[i].Type1 == filteredList[j].Type2)
+                    {
+                        filteredList.RemoveAt(j);
+                    }
+                }
+            }
+
+            return filteredList;
+        }
+
         //Bouton affichage des types choisit.
         private bool CanExecuteDisplayFirstTypeAction(object obj)
         {
@@ -161,6 +196,9 @@ namespace WpfPkmn.ViewModels
         {
             ResistingTypes.Clear();
             NotResistingTypes.Clear();
+            ResistingDoubleTypes.Clear();
+            Account = 0;
+
             Pokemon myPkmn;
             
             if (SelectedSecondType == null || SelectedSecondType.Label == "Aucun")
@@ -184,6 +222,7 @@ namespace WpfPkmn.ViewModels
 
             var resistances = GetSimpleResistances(myPkmn);
             var weaknesses = GetSimpleWeaknesses(myPkmn);
+            var doubleResistingTypes = GetAllResistingDoubleTypes(myPkmn);
 
             foreach (var resistance in resistances)
             {
@@ -199,7 +238,16 @@ namespace WpfPkmn.ViewModels
                     Name = $"{weakness.PkmnTypeName}"
                 });
             }
-            
+
+            foreach(var doubleResistingType in doubleResistingTypes)
+            {
+                ResistingDoubleTypes.Add(new TypeDisplayItem
+                {
+                    Name = $"{doubleResistingType.Type1.PkmnTypeName} / {doubleResistingType.Type2.PkmnTypeName}"
+                });
+            }
+
+            Account = doubleResistingTypes.Count;
             //MessageBox.Show($"Type de la variable : {SelectedFirstType.Label.GetType()} - {SelectedSecondType.Label.GetType()}");
         }
 
@@ -301,6 +349,48 @@ namespace WpfPkmn.ViewModels
             }
 
             return simpleResistancesList;
+        }
+        public static List<Pokemon> GetAllResistingDoubleTypes(Pokemon onePkmn)
+        {
+            var allTypes = GetAllTypes();
+            List<Pokemon> allDoubleTypeResistancesList = new List<Pokemon>();
+            Pokemon pkmnTest;
+            //MessageBox.Show($"Test : {allTypes[13].PkmnTypeName}, {allTypes[17].PkmnTypeName}");
+            for (int i = 0; i < allTypes.Count; i++)
+            {
+                for (int j = i + 1; j < allTypes.Count; j++)
+                {
+                    if(allTypes[i] != allTypes[j])
+                    {
+                        pkmnTest = new Pokemon(allTypes[i], allTypes[j]);
+                        if (onePkmn.Type2 != null)
+                        {
+                            double effictiveness1 = pkmnTest.GetEffectiveness(onePkmn.Type1);
+                            double effictiveness2 = pkmnTest.GetEffectiveness(onePkmn.Type2);
+                            //MessageBox.Show($"Resultat de {onePkmn.Type1.PkmnTypeName} / {onePkmn.Type2.PkmnTypeName} : {effictiveness1}, {effictiveness2}");
+                            if (effictiveness1 < 1 && effictiveness2 < 1)
+                            {
+                                allDoubleTypeResistancesList.Add(pkmnTest);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            /*
+            if(onePkmn.Type2 != null)
+            {
+                double effictiveness1 = pkmnTest.GetEffectiveness(onePkmn.Type1);
+                double effictiveness2 = pkmnTest.GetEffectiveness(onePkmn.Type2);
+                MessageBox.Show($"Resultat de {onePkmn.Type1.PkmnTypeName} / {onePkmn.Type2.PkmnTypeName} : {effictiveness1}, {effictiveness2}");
+                if(effictiveness1 < 1 && effictiveness2 < 1 )
+                {
+                    allDoubleTypeResistancesList.Add(pkmnTest);
+                }
+            }*/
+
+
+            return allDoubleTypeResistancesList;
         }
         public class TypeDisplayItem
         {
