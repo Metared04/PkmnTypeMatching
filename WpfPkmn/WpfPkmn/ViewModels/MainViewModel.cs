@@ -10,15 +10,18 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Pkmn.Models;
+using WpfPkmn.Views;
 
 namespace WpfPkmn.ViewModels
 {
-    public class MainViewModel : INotifyPropertyChanged
+    public class MainViewModel /*: INotifyPropertyChanged*/
     {
+        /*
         public ObservableCollection<OptionItem> TypeOptions1 { get; set; }
         public ObservableCollection<OptionItem> TypeOptions2 { get; set; }
         private RelayCommand _validateCommand;
         private RelayCommand _testCommand;
+        //private RelayCommand _openShowTeamsWeaknessesCommand;
 
         private OptionItem _selectedTypeOption1;
         public OptionItem SelectedTypeOption1
@@ -45,6 +48,7 @@ namespace WpfPkmn.ViewModels
         }
         public ICommand ValidateCommand { get; }
         public ICommand TestCommand { get; }
+        //public ICommand OpenShowTeamsWeaknessesCommand { get; }
 
         public MainViewModel()
         {
@@ -91,10 +95,19 @@ namespace WpfPkmn.ViewModels
                 new OptionItem { Label = "Acier", Type = new SteelType() },
                 new OptionItem { Label = "Eau", Type = new WaterType() },
             };
-            _validateCommand = new RelayCommand(Validate/*, () => SelectedTypeOption1 != null && SelectedTypeOption2 != null*/);
+            _validateCommand = new RelayCommand(Validate/*, () => SelectedTypeOption1 != null && SelectedTypeOption2 != null);
             ValidateCommand = _validateCommand;
             _testCommand = new RelayCommand(Test);
             TestCommand = _testCommand;
+            //_openShowTeamsWeaknessesCommand = new RelayCommand(OpenShowWeaknesses);
+            //OpenShowTeamsWeaknessesCommand = _openShowTeamsWeaknessesCommand;
+        }
+
+        private void OpenShowWeaknesses()
+        {
+            MessageBox.Show("Je dois changer de fenetre");
+            var window = new ShowWeaknessesView();
+            window.Show();
         }
 
         private void Validate()
@@ -127,5 +140,6 @@ namespace WpfPkmn.ViewModels
             public string Label { get; set; }
             public PkmnType Type { get; set; }
         }
+    */
     }
 }

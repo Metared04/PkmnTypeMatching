@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Pkmn.Models;
+using WpfPkmn.Views;
 using static WpfPkmn.ViewModels.MainViewModel;
 
 namespace WpfPkmn.ViewModels
@@ -18,6 +19,7 @@ namespace WpfPkmn.ViewModels
         private OptionItem _selectedFirstType;
         private OptionItem _selectedSecondType;
         private int _account;
+        private RelayCommand _openShowTeamsWeaknessesCommand;
 
         public ObservableCollection<OptionItem> FirstType { get; set; }
         public ObservableCollection<OptionItem> SecondType { get; set; }
@@ -65,6 +67,7 @@ namespace WpfPkmn.ViewModels
         //Commandes
         public ICommand ExecuteDisplayFirstType { get; }
         public ICommand ExecuteDisplayPkmnResistances { get; }
+        public ICommand OpenShowTeamsWeaknessesCommand { get; }
 
         //Constructeur
         public GetPkmnTypesViewModel()
@@ -77,6 +80,8 @@ namespace WpfPkmn.ViewModels
             Account = 0;
             ExecuteDisplayFirstType = new ViewModelCommand(ExecuteDisplayFirstTypeAction, CanExecuteDisplayFirstTypeAction);
             ExecuteDisplayPkmnResistances = new ViewModelCommand(ExecuteDisplayPkmnResistancesAction, CanExecuteDisplayPkmnResistancesAction);
+            _openShowTeamsWeaknessesCommand = new RelayCommand(OpenShowWeaknesses);
+            OpenShowTeamsWeaknessesCommand = _openShowTeamsWeaknessesCommand;
             LoadPkmnType();
         }
 
@@ -395,6 +400,12 @@ namespace WpfPkmn.ViewModels
         public class TypeDisplayItem
         {
             public string Name { get; set; }
+        }
+        private void OpenShowWeaknesses()
+        {
+            MessageBox.Show("Je dois changer de fenetre");
+            var window = new ShowWeaknessesView();
+            window.Show();
         }
         /*
         public static List<PkmnType> ShowSimpleResistanceOnly(Pokemon onePkmn)
