@@ -18,10 +18,13 @@
             <RowDefinition />
             <RowDefinition />
             <RowDefinition />
+            <RowDefinition Height="25"/>
+            <RowDefinition />
+            <RowDefinition Height="25"/>
             <RowDefinition />
             <RowDefinition />
             <RowDefinition Height="25"/>
-            <RowDefinition Height="200"/>
+            <RowDefinition />
             <RowDefinition Height="20"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -37,9 +40,12 @@
             <ColumnDefinition />
             <ColumnDefinition Width="20"/>
         </Grid.ColumnDefinitions>
+        <Grid.Background>
+            <ImageBrush ImageSource="/Assets/Images/fondHerbe.jpg" Stretch="UniformToFill" />
+        </Grid.Background>
         <Menu Grid.Row="0"
-              Grid.Column="1"
-              Grid.ColumnSpan="3">
+              Grid.Column="0"
+              Grid.ColumnSpan="2">
             <MenuItem Header="Options">
                 <MenuItem Header="Quitter"></MenuItem>
             </MenuItem>
@@ -65,39 +71,31 @@
                   Grid.ColumnSpan="2"
                   VerticalAlignment="Center"
                   HorizontalContentAlignment="Center"/>
-        <Button 
-            Content="Valider" 
-            Command="{Binding ExecuteDisplayFirstType}" 
-            Margin="0,10,0,0"
-            Grid.Row="2" 
-            Grid.Column="7"
-            Grid.ColumnSpan="2"
-            VerticalAlignment="Center"/>
-        <Button 
-            Content="test" 
-            Command="{Binding ExecuteDisplayPkmnResistances}" 
-            Margin="0,10,0,0"
-            Cursor="Hand"
-            Grid.Row="3"
-            Grid.Column="7"
-            Grid.ColumnSpan="2"
-            VerticalAlignment="Center"/>
-        <Button 
-            Content="Ouiu" 
-            Command="{Binding ExecuteDisplayRecommandedPkmn}" 
-            Margin="0,10,0,0"
-            Grid.Row="7" 
-            Grid.Column="6"
-            VerticalAlignment="Center"/>
-        <TextBlock Text="Type(s) resistant :"
-                   Grid.Row="7"
-                   Grid.Column="1"/>
-        <TextBlock Text="{Binding Account}"
-                   Grid.Row="7"
-                   Grid.Column="5"
-                   HorizontalAlignment="Center"/>
-        <ListView ItemsSource="{Binding ResistingTypes}"
-                  Grid.Row="8"
+        <Button Content="Valider"
+                Command="{Binding ExecuteDisplayFirstType}"
+                Margin="0,10,0,0"
+                Grid.Row="2"
+                Grid.Column="7"
+                Grid.ColumnSpan="2"
+                VerticalAlignment="Center"/>
+        <Button Content="test"
+                Command="{Binding ExecuteDisplayPkmnResistances}"
+                Margin="0,10,0,0"
+                Cursor="Hand"
+                Grid.Row="3"
+                Grid.Column="7"
+                Grid.ColumnSpan="2"
+                VerticalAlignment="Center"/>
+        <Button Content="Afficher"
+                Command="{Binding ExecuteDisplayRecommandedPkmn}"
+                Grid.Row="7"
+                Grid.Column="6"/>
+        <TextBlock Text="Type faibles"
+                   Grid.Row="5"
+                   Grid.Column="1" 
+                   FontWeight="Bold"/>
+        <ListView ItemsSource="{Binding FirstTypeWeakTypes}"
+                  Grid.Row="6"
                   Grid.Column="1"
                   HorizontalContentAlignment="Center">
             <ListView.ItemTemplate>
@@ -108,12 +106,51 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
-        <TextBlock Text="Type(s) faible :"
+        <TextBlock Text="Type resistants"
+                   Grid.Row="5"
+                   Grid.Column="3"
+                   FontWeight="Bold"/>
+        <ListView ItemsSource="{Binding FirstTypeResistingTypes}"
+                  Grid.Row="6"
+                  Grid.Column="3"
+                  HorizontalContentAlignment="Center">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Name}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <TextBlock Text="(Offensive) Type(s) qui resistent :"
+                   Grid.Row="7"
+                   Grid.Column="1"
+                   FontWeight="Bold"/>
+        <TextBlock Text="{Binding Account}"
+                   Grid.Row="7"
+                   Grid.Column="5"
+                   HorizontalAlignment="Center"
+                   FontWeight="Bold"/>
+        <ListView ItemsSource="{Binding DefensiveWeakTypesList}"
+                  Grid.Row="8"
+                  Grid.Column="1"
+                  Grid.RowSpan="2"
+                  HorizontalContentAlignment="Center">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Name}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <TextBlock Text="(Offensive) Type(s) faibles :"
                    Grid.Row="7"
                    Grid.Column="2"/>
-        <ListView ItemsSource="{Binding NotResistingTypes}"
+        <ListView ItemsSource="{Binding DefensiveResistingTypesList}"
                   Grid.Row="8"
                   Grid.Column="2"
+                  Grid.RowSpan="2"
                   HorizontalContentAlignment="Center">
             <ListView.ItemTemplate>
                 <DataTemplate>
@@ -124,13 +161,35 @@
             </ListView.ItemTemplate>
         </ListView>
         <TextBlock Text="Double type resistant :"
-           Grid.Row="7"
-           Grid.Column="4"/>
+                   Grid.Row="7"
+                   Grid.Column="4"
+                   Grid.ColumnSpan="2"
+                   FontWeight="Bold"/>
         <ListView ItemsSource="{Binding ResistingDoubleTypes}"
-          Grid.Row="8"
-          Grid.Column="4"
-          Grid.ColumnSpan="2"
-          HorizontalContentAlignment="Center">
+                  Grid.Row="8"
+                  Grid.Column="4"
+                  Grid.RowSpan="2"
+                  Grid.ColumnSpan="2"
+                  HorizontalContentAlignment="Center">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Name}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <TextBlock Text="Double type faibles :"
+                   Grid.Row="7"
+                   Grid.Column="7"
+                   Grid.ColumnSpan="2"
+                   FontWeight="Bold"/>
+        <ListView ItemsSource="{Binding WeakDoubleTypes}"
+                  Grid.Row="8"
+                  Grid.Column="7"
+                  Grid.RowSpan="2"
+                  Grid.ColumnSpan="2"
+                  HorizontalContentAlignment="Center">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">

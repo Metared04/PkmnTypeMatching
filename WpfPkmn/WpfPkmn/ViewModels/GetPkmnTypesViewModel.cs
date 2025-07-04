@@ -24,9 +24,12 @@ namespace WpfPkmn.ViewModels
         public ObservableCollection<OptionItem> FirstType { get; set; }
         public ObservableCollection<OptionItem> SecondType { get; set; }
 
-        public ObservableCollection<TypeDisplayItem> ResistingTypes { get; set; }
-        public ObservableCollection<TypeDisplayItem> NotResistingTypes { get; set; }
+        public ObservableCollection<TypeDisplayItem> FirstTypeWeakTypes { get; set; }
+        public ObservableCollection<TypeDisplayItem> FirstTypeResistingTypes { get; set; }
+        public ObservableCollection<TypeDisplayItem> DefensiveWeakTypesList { get; set; }
+        public ObservableCollection<TypeDisplayItem> DefensiveResistingTypesList { get; set; }
         public ObservableCollection<TypeDisplayItem> ResistingDoubleTypes { get; set; }
+        public ObservableCollection<TypeDisplayItem> WeakDoubleTypes { get; set; }
 
         //Proprietes
         public OptionItem SelectedFirstType
@@ -36,7 +39,6 @@ namespace WpfPkmn.ViewModels
             {
                 _selectedFirstType = value;
                 OnPropertyChanged(nameof(SelectedFirstType));
-                // Déclencher la réévaluation des commandes
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -62,7 +64,7 @@ namespace WpfPkmn.ViewModels
                     OnPropertyChanged(nameof(Account));
                 }
             }
-}
+        }
 
         //Commandes
         public ICommand ExecuteDisplayFirstType { get; }
@@ -74,9 +76,12 @@ namespace WpfPkmn.ViewModels
         {
             FirstType = new ObservableCollection<OptionItem>();
             SecondType = new ObservableCollection<OptionItem>();
-            ResistingTypes = new ObservableCollection<TypeDisplayItem>();
-            NotResistingTypes = new ObservableCollection<TypeDisplayItem>();
+            DefensiveWeakTypesList = new ObservableCollection<TypeDisplayItem>();
+            DefensiveResistingTypesList = new ObservableCollection<TypeDisplayItem>();
             ResistingDoubleTypes = new ObservableCollection<TypeDisplayItem>();
+            WeakDoubleTypes = new ObservableCollection<TypeDisplayItem>();
+            FirstTypeWeakTypes = new ObservableCollection<TypeDisplayItem>();
+            FirstTypeResistingTypes = new ObservableCollection<TypeDisplayItem>();
             Account = 0;
             ExecuteDisplayFirstType = new ViewModelCommand(ExecuteDisplayFirstTypeAction, CanExecuteDisplayFirstTypeAction);
             ExecuteDisplayPkmnResistances = new ViewModelCommand(ExecuteDisplayPkmnResistancesAction, CanExecuteDisplayPkmnResistancesAction);
@@ -121,7 +126,6 @@ namespace WpfPkmn.ViewModels
                 SecondType.Add(new OptionItem(type.PkmnTypeName, type));
             }
         }
-
         private static List<PkmnType> GetAllTypes()
         {
             var insecte = new BugType();
@@ -152,23 +156,6 @@ namespace WpfPkmn.ViewModels
             };
         }
 
-        public static List<Pokemon> FilterDuplicate(List<Pokemon> allDoubleTypes)
-        {
-            var filteredList = new List<Pokemon>(allDoubleTypes);
-            for (int i = 0; i < allDoubleTypes.Count; i++)
-            {
-                for (int j = filteredList.Count - 1; j >= 0; j--)
-                {
-                    if (allDoubleTypes[i].Type1 == filteredList[j].Type2)
-                    {
-                        filteredList.RemoveAt(j);
-                    }
-                }
-            }
-
-            return filteredList;
-        }
-
         //Bouton affichage des types choisit.
         private bool CanExecuteDisplayFirstTypeAction(object obj)
         {
@@ -177,21 +164,184 @@ namespace WpfPkmn.ViewModels
 
         private void ExecuteDisplayFirstTypeAction(object obj)
         {
-            if(SelectedSecondType == null)
+            FirstTypeWeakTypes.Clear();
+            FirstTypeResistingTypes.Clear();
+            /*
+            if (SelectedSecondType == null)
             {
-                MessageBox.Show($"Type choisit : {SelectedFirstType.Label}");
+                //MessageBox.Show($"Type choisit : {SelectedFirstType.Label}");
+                Pokemon pkmn1 = new Pokemon(SelectedFirstType.Value);
+                var weaksForTypeOne = GetFirstTypeEffictivityVsAllType(pkmn1);
+                var resistanceForTypeOne = GetFirstTypeNoneffictivityVsAllType(pkmn1);
+                foreach (var weak in weaksForTypeOne)
+                {
+                    FirstTypeWeakTypes.Add(new TypeDisplayItem
+                    {
+                        Name = $"{weak.PkmnTypeName}"
+                    });
+                }
+                foreach (var resistance in resistanceForTypeOne)
+                {
+                    FirstTypeResistingTypes.Add(new TypeDisplayItem
+                    {
+                        Name = $"{resistance.PkmnTypeName}"
+                    });
+                }
             }
             else if(SelectedFirstType == null)
             {
                 SelectedFirstType = SelectedSecondType;
-                MessageBox.Show($"Type choisit : {SelectedFirstType.Label}");
+                //MessageBox.Show($"Type choisit : {SelectedFirstType.Label}");
+                Pokemon pkmn1 = new Pokemon(SelectedFirstType.Value);
+                var weaksForTypeOne = GetFirstTypeEffictivityVsAllType(pkmn1);
+                var resistanceForTypeOne = GetFirstTypeNoneffictivityVsAllType(pkmn1);
+                foreach (var weak in weaksForTypeOne)
+                {
+                    FirstTypeWeakTypes.Add(new TypeDisplayItem
+                    {
+                        Name = $"{weak.PkmnTypeName}"
+                    });
+                }
+                foreach (var resistance in resistanceForTypeOne)
+                {
+                    FirstTypeResistingTypes.Add(new TypeDisplayItem
+                    {
+                        Name = $"{resistance.PkmnTypeName}"
+                    });
+                }
             } else
             {
-                MessageBox.Show($"Double type choisit : {SelectedFirstType.Label} - {SelectedSecondType.Label}");
+                //MessageBox.Show($"Double type choisit : {SelectedFirstType.Label} - {SelectedSecondType.Label}");
+                Pokemon pkmn1 = new Pokemon(SelectedFirstType.Value);
+                Pokemon pkmn2 = new Pokemon(SelectedSecondType.Value);
+                var weaksForTypeOne = GetFirstTypeEffictivityVsAllType(pkmn1);
+                var weaksForTypeTwo = GetFirstTypeEffictivityVsAllType(pkmn2);
+                var resistanceForTypeOne = GetFirstTypeNoneffictivityVsAllType(pkmn1);
+                var resistanceForTypeTwo = GetFirstTypeNoneffictivityVsAllType(pkmn2);
+                //var resistanceForTypeOne = FiltrerTypeFaiblesEtResistant(weaksForTypeTwo, GetFirstTypeNoneffictivityVsAllType(pkmn1));
+                //var resistanceForTypeTwo = FiltrerTypeFaiblesEtResistant(weaksForTypeOne, GetFirstTypeNoneffictivityVsAllType(pkmn2));
+                foreach (var weak in weaksForTypeOne)
+                {
+                    FirstTypeWeakTypes.Add(new TypeDisplayItem
+                    {
+                        Name = $"{weak.PkmnTypeName}"
+                    });
+                }
+                foreach (var weak in weaksForTypeTwo)
+                {
+                    FirstTypeWeakTypes.Add(new TypeDisplayItem
+                    {
+                        Name = $"{weak.PkmnTypeName}"
+                    });
+                }
+                foreach (var resistance in resistanceForTypeOne)
+                {
+                    FirstTypeResistingTypes.Add(new TypeDisplayItem
+                    {
+                        Name = $"{resistance.PkmnTypeName}"
+                    });
+                }
+                foreach (var resistance in resistanceForTypeTwo)
+                {
+                    FirstTypeResistingTypes.Add(new TypeDisplayItem
+                    {
+                        Name = $"{resistance.PkmnTypeName}"
+                    });
+                }
+                
+            }*/
+        }
+        
+        public static List<PkmnType> GetAllPkmnOffensiveTypeEffictivityVsAllType(Pokemon onePkmn)
+        {
+            var allTypes = GetAllTypes();
+            List<PkmnType> allWeakTypes = new List<PkmnType>();
+            var firstType = onePkmn.Type1;
+            var secondType = onePkmn.Type2;
+            if(secondType == null)
+            {
+                for (int i = 0; i < allTypes.Count; i++)
+                {
+                    double effectivenessScoreVsOneType = firstType.GetEffectivenessAgainst(allTypes[i]);
+                    if (effectivenessScoreVsOneType > 1)
+                    {
+                        allWeakTypes.Add(allTypes[i]);
+                    }
+                }
+            } else
+            {
+                for (int i = 0; i < allTypes.Count; i++)
+                {
+                    double effectivenessScoreVsOneType = firstType.GetEffectivenessAgainst(allTypes[i]);
+                    if (effectivenessScoreVsOneType > 1)
+                    {
+                        allWeakTypes.Add(allTypes[i]);
+                    }
+                }
+                for (int i = 0; i < allTypes.Count; i++)
+                {
+                    double effectivenessScoreVsOneType = secondType.GetEffectivenessAgainst(allTypes[i]);
+                    if (effectivenessScoreVsOneType > 1)
+                    {
+                        allWeakTypes.Add(allTypes[i]);
+                    }
+                }
             }
+
+            return allWeakTypes.Distinct().ToList();
+        }
+        public static List<PkmnType> GetAllPkmnOffensiveTypeNoneEffictivityVsAllType(Pokemon onePkmn)
+        {
+            var allTypes = GetAllTypes();
+            List<PkmnType> allWeakTypes = new List<PkmnType>();
+            var firstType = onePkmn.Type1;
+            var secondType = onePkmn.Type2;
+
+            if (secondType == null)
+            {
+                for (int i = 0; i < allTypes.Count; i++)
+                {
+                    double effectivenessScoreVsOneType = firstType.GetEffectivenessAgainst(allTypes[i]);
+                    if (effectivenessScoreVsOneType < 1)
+                    {
+                        allWeakTypes.Add(allTypes[i]);
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < allTypes.Count; i++)
+                {
+                    double effectivenessScoreVsTypeOne = firstType.GetEffectivenessAgainst(allTypes[i]);
+                    double effectivenessScoreVsTypeTwo = secondType.GetEffectivenessAgainst(allTypes[i]);
+                    if (effectivenessScoreVsTypeOne < 1 && effectivenessScoreVsTypeTwo < 1)
+                    {
+                        allWeakTypes.Add(allTypes[i]);
+                    }
+                }
+            }
+
+            return allWeakTypes;
+        }
+        public static List<PkmnType> GetFirstTypeNoneffictivityVsAllType(Pokemon onePkmn)
+        {
+            var allTypes = GetAllTypes();
+            List<PkmnType> allWeakTypes = new List<PkmnType>();
+            var firstType = onePkmn.Type1;
+
+            for (int i = 0; i < allTypes.Count; i++)
+            {
+                double effectivenessScoreVsOneType = firstType.GetEffectivenessAgainst(allTypes[i]);
+                if (effectivenessScoreVsOneType < 1)
+                {
+                    allWeakTypes.Add(allTypes[i]);
+                }
+            }
+
+            return allWeakTypes;
         }
 
-        //Bouton affichage du type du pkmn choisit
+        //Bouton qui affiche les simples types qui sont faibles et resistants a un type/double type donné
         private bool CanExecuteDisplayPkmnResistancesAction(object obj)
         {
             return (SelectedFirstType != null);
@@ -199,61 +349,80 @@ namespace WpfPkmn.ViewModels
 
         private void ExecuteDisplayPkmnResistancesAction(object obj)
         {
-            ResistingTypes.Clear();
-            NotResistingTypes.Clear();
+            DefensiveWeakTypesList.Clear();
+            DefensiveResistingTypesList.Clear();
             ResistingDoubleTypes.Clear();
+            WeakDoubleTypes.Clear();
             Account = 0;
 
             Pokemon myPkmn;
-            
+
             if (SelectedSecondType == null || SelectedSecondType.Label == "Aucun")
             {
                 myPkmn = new Pokemon(SelectedFirstType.Value);
-                MessageBox.Show("Pkmn monotype");
             }
             else if (SelectedFirstType.Value == SelectedSecondType.Value)
             {
                 myPkmn = new Pokemon(SelectedFirstType.Value);
-                MessageBox.Show("Pkmn monotype");
-                //var myPkmn = new Pokemon(SelectedFirstType.Value);
-                //var res = ShowSimpleResistanceOnly(myPkmn);
             } else
             {
                 myPkmn = new Pokemon(SelectedFirstType.Value, SelectedSecondType.Value);
-                MessageBox.Show("Pkmn double type");
-                //var myPkmn = new Pokemon(SelectedFirstType.Value, SelectedSecondType.Value);
-                //var res = ShowSimpleResistanceOnly(myPkmn);
             }
+            var allWeaksForPkmn = GetAllPkmnOffensiveTypeEffictivityVsAllType(myPkmn);
+            var allResistanceForPkmn = GetAllPkmnOffensiveTypeNoneEffictivityVsAllType(myPkmn);
+            var allDoubleResistingTypes = GetAllResistingDoubleTypes(myPkmn);
+            var allDoubleWeakTypes = GetAllWeakDoubleTypes(myPkmn);
 
-            var resistances = GetSimpleResistances(myPkmn);
-            var weaknesses = GetSimpleWeaknesses(myPkmn);
-            var doubleResistingTypes = GetAllResistingDoubleTypes(myPkmn);
-
-            foreach (var resistance in resistances)
+            foreach (var weakness in allWeaksForPkmn)
             {
-                ResistingTypes.Add(new TypeDisplayItem 
-                { 
-                    Name = $"{resistance.PkmnTypeName}" 
-                });
-            }
-            foreach (var weakness in weaknesses)
-            {
-                NotResistingTypes.Add(new TypeDisplayItem
+                DefensiveWeakTypesList.Add(new TypeDisplayItem
                 {
                     Name = $"{weakness.PkmnTypeName}"
                 });
             }
-
-            foreach(var doubleResistingType in doubleResistingTypes)
+            if(allResistanceForPkmn.Count > 0)
+            {
+                foreach (var resistance in allResistanceForPkmn)
+                {
+                    DefensiveResistingTypesList.Add(new TypeDisplayItem
+                    {
+                        Name = $"{resistance.PkmnTypeName}"
+                    });
+                }
+            } else
+            {
+                DefensiveResistingTypesList.Add(new TypeDisplayItem
+                {
+                    Name = $"Rien"
+                });
+            }
+            /*
+            foreach (var resistance in allResistanceForPkmn)
+            {
+                DefensiveResistingTypesList.Add(new TypeDisplayItem
+                {
+                    Name = $"{resistance.PkmnTypeName}"
+                });
+            }
+            */
+            foreach (var doubleResistingType in allDoubleResistingTypes)
             {
                 ResistingDoubleTypes.Add(new TypeDisplayItem
                 {
                     Name = $"{doubleResistingType.Type1.PkmnTypeName} / {doubleResistingType.Type2.PkmnTypeName}"
                 });
             }
+            foreach(var doubleWeaknessType in allDoubleWeakTypes)
+            {
+                WeakDoubleTypes.Add(new TypeDisplayItem
+                {
+                    Name = $"{doubleWeaknessType.Type1.PkmnTypeName} / {doubleWeaknessType.Type2.PkmnTypeName}"
+                });
+            }
 
+            /*
             Account = doubleResistingTypes.Count;
-            //MessageBox.Show($"Type de la variable : {SelectedFirstType.Label.GetType()} - {SelectedSecondType.Label.GetType()}");
+            */
         }
 
         //Autres methodes
@@ -309,9 +478,12 @@ namespace WpfPkmn.ViewModels
         {
             var allTypes = GetAllTypes();
             List<PkmnType> simpleResistancesList = new List<PkmnType>();
+            //Pokemon sousPkmn = new Pokemon(onePkmn.Type1);
 
             if (onePkmn.Type2 == null)
             {
+                //var weaksForTypeOne = GetFirstTypeEffictivityVsAllType(onePkmn.Type1);
+                /*
                 for (int i = 0; i < allTypes.Count; i++)
                 {
                     Pokemon pkmnTest = new Pokemon(allTypes[i]);
@@ -323,6 +495,7 @@ namespace WpfPkmn.ViewModels
                     //MessageBox.Show($"Efficacite de {onePkmn.Type1.PkmnTypeName} sur {allTypes[i].PkmnTypeName} = {effictiveness}");
                     // Donne l'efficacite d'un type sur 1 pkmn
                 }
+                */
             }
             else
             {
@@ -377,6 +550,13 @@ namespace WpfPkmn.ViewModels
                             {
                                 allDoubleTypeResistancesList.Add(pkmnTest);
                             }
+                        } else
+                        {
+                            double effictiveness1 = pkmnTest.GetEffectiveness(onePkmn.Type1);
+                            if (effictiveness1 < 1)
+                            {
+                                allDoubleTypeResistancesList.Add(pkmnTest);
+                            }
                         }
                     }
                 }
@@ -397,13 +577,61 @@ namespace WpfPkmn.ViewModels
 
             return allDoubleTypeResistancesList;
         }
+        public static List<Pokemon> GetAllWeakDoubleTypes(Pokemon onePkmn)
+        {
+            var allTypes = GetAllTypes();
+            List<Pokemon> allDoubleTypeWeaknessesList = new List<Pokemon>();
+            Pokemon pkmnTest;
+            //MessageBox.Show($"Test : {allTypes[13].PkmnTypeName}, {allTypes[17].PkmnTypeName}");
+            for (int i = 0; i < allTypes.Count; i++)
+            {
+                for (int j = i + 1; j < allTypes.Count; j++)
+                {
+                    if (allTypes[i] != allTypes[j])
+                    {
+                        pkmnTest = new Pokemon(allTypes[i], allTypes[j]);
+                        if (onePkmn.Type2 != null)
+                        {
+                            double effictiveness1 = pkmnTest.GetEffectiveness(onePkmn.Type1);
+                            double effictiveness2 = pkmnTest.GetEffectiveness(onePkmn.Type2);
+                            //MessageBox.Show($"{onePkmn.Type1.PkmnTypeName} contre {allTypes[i].PkmnTypeName}/{allTypes[j].PkmnTypeName} = {effictiveness1} et {onePkmn.Type2.PkmnTypeName} contre {allTypes[i].PkmnTypeName}/{allTypes[j].PkmnTypeName} = {effictiveness2}");
+                            if (effictiveness1 > 1 || effictiveness2 > 1)
+                            {
+                                allDoubleTypeWeaknessesList.Add(pkmnTest);
+                            }
+                        } else
+                        {
+                            double effictiveness1 = pkmnTest.GetEffectiveness(onePkmn.Type1);
+                            if (effictiveness1 > 1)
+                            {
+                                allDoubleTypeWeaknessesList.Add(pkmnTest);
+                            }
+                        }
+                    }
+                }
+            }
+
+            /*
+            if(onePkmn.Type2 != null)
+            {
+                double effictiveness1 = pkmnTest.GetEffectiveness(onePkmn.Type1);
+                double effictiveness2 = pkmnTest.GetEffectiveness(onePkmn.Type2);
+                MessageBox.Show($"Resultat de {onePkmn.Type1.PkmnTypeName} / {onePkmn.Type2.PkmnTypeName} : {effictiveness1}, {effictiveness2}");
+                if(effictiveness1 < 1 && effictiveness2 < 1 )
+                {
+                    allDoubleTypeResistancesList.Add(pkmnTest);
+                }
+            }*/
+
+
+            return allDoubleTypeWeaknessesList;
+        }
         public class TypeDisplayItem
         {
             public string Name { get; set; }
         }
         private void OpenShowWeaknesses()
         {
-            MessageBox.Show("Je dois changer de fenetre");
             var window = new ShowWeaknessesView();
             window.Show();
         }
@@ -504,6 +732,75 @@ namespace WpfPkmn.ViewModels
             }
             PkmnType[] tabTypes = allResistancesList.ToArray();
             return tabTypes;
+        }
+        public static List<Pokemon> FilterDuplicate(List<Pokemon> allDoubleTypes)
+        {
+            var filteredList = new List<Pokemon>(allDoubleTypes);
+            for (int i = 0; i < allDoubleTypes.Count; i++)
+            {
+                for (int j = filteredList.Count - 1; j >= 0; j--)
+                {
+                    if (allDoubleTypes[i].Type1 == filteredList[j].Type2)
+                    {
+                        filteredList.RemoveAt(j);
+                    }
+                }
+            }
+
+            return filteredList;
+        }
+        public static List<PkmnType> GetFirstTypeEffictivityVsAllType(Pokemon onePkmn)
+        {
+            var allTypes = GetAllTypes();
+            List<PkmnType> allWeakTypes = new List<PkmnType>();
+            var firstType = onePkmn.Type1;
+
+            for (int i = 0; i < allTypes.Count; i++)
+            {
+                double effectivenessScoreVsOneType = firstType.GetEffectivenessAgainst(allTypes[i]);
+                if(effectivenessScoreVsOneType > 1)
+                {
+                    allWeakTypes.Add(allTypes[i]);
+                }
+            }
+
+            return allWeakTypes;
+        }
+        public static List<PkmnType> FiltrerTypeFaiblesEtResistant(List<PkmnType> weaknessList, List<PkmnType> resistanceList)
+        {
+            //MessageBox.Show("On rentre ?");
+            List<PkmnType> allFiltredResistingTypeList = new List<PkmnType>();
+            int foundType = 0;
+            
+            if (resistanceList == null || weaknessList == null)
+            {
+                //MessageBox.Show("Vide ?");
+                return allFiltredResistingTypeList;
+            }
+            else
+            {
+                MessageBox.Show($"{resistanceList.Count}");
+                for (int i = 0; i < resistanceList.Count; i++)
+                {
+                    //MessageBox.Show($"{i}");
+                    for(int j = 0; j < weaknessList.Count; j++)
+                    {
+                        if (resistanceList[i].PkmnTypeName == weaknessList[j].PkmnTypeName)
+                        {
+                            foundType = 1;
+                        }
+                        MessageBox.Show($"Type faible : {weaknessList[j].ToString}, Type resistant : {resistanceList[i].ToString} =>{foundType}");
+                    }
+                    /*
+                    if(foundType == 0)
+                    {
+                        allFiltredResistingTypeList.Add(resistanceList[i]);
+                    }
+                    
+                    foundType = 0;
+                }
+            }
+            return allFiltredResistingTypeList;
         }
         */
     }
