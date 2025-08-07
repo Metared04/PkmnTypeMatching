@@ -43,7 +43,10 @@
             <ColumnDefinition Width="20"/>
         </Grid.ColumnDefinitions>
         <Grid.Background>
-            <ImageBrush ImageSource="/Assets/Images/fondHerbe.jpg" Stretch="UniformToFill" />
+            <SolidColorBrush Color="#88C880"/>
+            <!--#88C880
+                <ImageBrush ImageSource="/Assets/Images/fondHerbe.jpg" Stretch="UniformToFill" />
+            -->
         </Grid.Background>
         <Menu Grid.Row="0"
               Grid.Column="1"

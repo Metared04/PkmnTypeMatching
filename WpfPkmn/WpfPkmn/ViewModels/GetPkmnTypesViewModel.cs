@@ -15,7 +15,7 @@ namespace WpfPkmn.ViewModels
 {
     public class GetPkmnTypesViewModel : ViewModelBase
     {
-        //Champs
+        //------------------------------ Champs
         private OptionItem _selectedFirstType;
         private OptionItem _selectedSecondType;
         private int _account;
@@ -25,13 +25,14 @@ namespace WpfPkmn.ViewModels
         public ObservableCollection<OptionItem> SecondType { get; set; }
 
         public ObservableCollection<TypeDisplayItem> FirstTypeWeakTypes { get; set; }
-        public ObservableCollection<TypeDisplayItem> FirstTypeResistingTypes { get; set; }
+        public ObservableCollection<TypeDisplayItem> FirstTypeAllResistingTypes { get; set; }
+        public ObservableCollection<TypeDisplayItem> AllResistedDoubleTypes { get; set; }
         public ObservableCollection<TypeDisplayItem> DefensiveWeakTypesList { get; set; }
         public ObservableCollection<TypeDisplayItem> DefensiveResistingTypesList { get; set; }
         public ObservableCollection<TypeDisplayItem> ResistingDoubleTypes { get; set; }
         public ObservableCollection<TypeDisplayItem> WeakDoubleTypes { get; set; }
 
-        //Proprietes
+        //------------------------------ Proprietes
         public OptionItem SelectedFirstType
         {
             get => _selectedFirstType;
@@ -71,7 +72,7 @@ namespace WpfPkmn.ViewModels
         public ICommand ExecuteDisplayPkmnResistances { get; }
         public ICommand OpenShowTeamsWeaknessesCommand { get; }
 
-        //Constructeur
+        //------------------------------ Constructeur
         public GetPkmnTypesViewModel()
         {
             FirstType = new ObservableCollection<OptionItem>();
@@ -81,7 +82,8 @@ namespace WpfPkmn.ViewModels
             ResistingDoubleTypes = new ObservableCollection<TypeDisplayItem>();
             WeakDoubleTypes = new ObservableCollection<TypeDisplayItem>();
             FirstTypeWeakTypes = new ObservableCollection<TypeDisplayItem>();
-            FirstTypeResistingTypes = new ObservableCollection<TypeDisplayItem>();
+            FirstTypeAllResistingTypes = new ObservableCollection<TypeDisplayItem>();
+            //AllResistedDoubleTypes = new ObservableCollection<TypeDisplayItem>();
             Account = 0;
             ExecuteDisplayFirstType = new ViewModelCommand(ExecuteDisplayFirstTypeAction, CanExecuteDisplayFirstTypeAction);
             ExecuteDisplayPkmnResistances = new ViewModelCommand(ExecuteDisplayPkmnResistancesAction, CanExecuteDisplayPkmnResistancesAction);
@@ -156,109 +158,166 @@ namespace WpfPkmn.ViewModels
             };
         }
 
-        //Bouton affichage des types choisit.
+        //------------------------------ Mes Boutons
         private bool CanExecuteDisplayFirstTypeAction(object obj)
         {
             return SelectedFirstType != null;
         }
-
+        //Mon bouton de test
         private void ExecuteDisplayFirstTypeAction(object obj)
         {
             FirstTypeWeakTypes.Clear();
-            FirstTypeResistingTypes.Clear();
-            /*
-            if (SelectedSecondType == null)
+            FirstTypeAllResistingTypes.Clear();
+
+            Pokemon myPkmn;
+
+            if (SelectedSecondType == null || SelectedSecondType.Label == "Aucun")
             {
-                //MessageBox.Show($"Type choisit : {SelectedFirstType.Label}");
-                Pokemon pkmn1 = new Pokemon(SelectedFirstType.Value);
-                var weaksForTypeOne = GetFirstTypeEffictivityVsAllType(pkmn1);
-                var resistanceForTypeOne = GetFirstTypeNoneffictivityVsAllType(pkmn1);
-                foreach (var weak in weaksForTypeOne)
+                myPkmn = new Pokemon(SelectedFirstType.Value);
+            }
+            else if (SelectedFirstType.Value == SelectedSecondType.Value)
+            {
+                myPkmn = new Pokemon(SelectedFirstType.Value);
+            }
+            else
+            {
+                myPkmn = new Pokemon(SelectedFirstType.Value, SelectedSecondType.Value);
+            }
+
+            var allResistedTypesTest = GetAllPkmnDefensiveTypeEffictivityVsAllType(myPkmn);
+            if(allResistedTypesTest != null)
+            {
+                foreach (var resistedTypes in allResistedTypesTest)
                 {
-                    FirstTypeWeakTypes.Add(new TypeDisplayItem
+                    FirstTypeAllResistingTypes.Add(new TypeDisplayItem
                     {
-                        Name = $"{weak.PkmnTypeName}"
+                        Name = $"{resistedTypes.PkmnTypeName}"
                     });
                 }
-                foreach (var resistance in resistanceForTypeOne)
+            } else
+            {
+                FirstTypeAllResistingTypes.Add(new TypeDisplayItem
                 {
-                    FirstTypeResistingTypes.Add(new TypeDisplayItem
+                    Name = $"Rien"
+                });
+            }
+            
+        }
+
+        //Bouton qui affiche les simples types qui sont faibles et resistants a un type/double type donné
+        private bool CanExecuteDisplayPkmnResistancesAction(object obj)
+        {
+            return (SelectedFirstType != null);
+        }
+
+        private void ExecuteDisplayPkmnResistancesAction(object obj)
+        {
+            DefensiveWeakTypesList.Clear();
+            DefensiveResistingTypesList.Clear();
+            ResistingDoubleTypes.Clear();
+            WeakDoubleTypes.Clear();
+            FirstTypeWeakTypes.Clear();
+            FirstTypeAllResistingTypes.Clear();
+            Account = 0;
+
+            Pokemon myPkmn;
+
+            if (SelectedSecondType == null || SelectedSecondType.Label == "Aucun")
+            {
+                myPkmn = new Pokemon(SelectedFirstType.Value);
+            }
+            else if (SelectedFirstType.Value == SelectedSecondType.Value)
+            {
+                myPkmn = new Pokemon(SelectedFirstType.Value);
+            }
+            else
+            {
+                myPkmn = new Pokemon(SelectedFirstType.Value, SelectedSecondType.Value);
+            }
+            var allWeaksForPkmn = GetAllPkmnOffensiveTypeEffictivityVsAllType(myPkmn);
+            var allResistanceForPkmn = GetAllPkmnOffensiveTypeNoneEffictivityVsAllType(myPkmn);
+            var allDoubleResistingTypes = GetAllResistingDoubleTypes(myPkmn);
+            var allDoubleWeakTypes = GetAllWeakDoubleTypes(myPkmn);
+            var allResistedTypesTest = GetAllPkmnDefensiveTypeEffictivityVsAllType(myPkmn);
+
+            foreach (var weakness in allWeaksForPkmn)
+            {
+                DefensiveWeakTypesList.Add(new TypeDisplayItem
+                {
+                    Name = $"{weakness.PkmnTypeName}"
+                });
+            }
+            if (allResistanceForPkmn.Count > 0)
+            {
+                foreach (var resistance in allResistanceForPkmn)
+                {
+                    DefensiveResistingTypesList.Add(new TypeDisplayItem
                     {
                         Name = $"{resistance.PkmnTypeName}"
                     });
                 }
             }
-            else if(SelectedFirstType == null)
+            else
             {
-                SelectedFirstType = SelectedSecondType;
-                //MessageBox.Show($"Type choisit : {SelectedFirstType.Label}");
-                Pokemon pkmn1 = new Pokemon(SelectedFirstType.Value);
-                var weaksForTypeOne = GetFirstTypeEffictivityVsAllType(pkmn1);
-                var resistanceForTypeOne = GetFirstTypeNoneffictivityVsAllType(pkmn1);
-                foreach (var weak in weaksForTypeOne)
+                DefensiveResistingTypesList.Add(new TypeDisplayItem
                 {
-                    FirstTypeWeakTypes.Add(new TypeDisplayItem
-                    {
-                        Name = $"{weak.PkmnTypeName}"
-                    });
-                }
-                foreach (var resistance in resistanceForTypeOne)
-                {
-                    FirstTypeResistingTypes.Add(new TypeDisplayItem
-                    {
-                        Name = $"{resistance.PkmnTypeName}"
-                    });
-                }
-            } else
+                    Name = $"Rien"
+                });
+            }
+            /*
+            foreach (var resistance in allResistanceForPkmn)
             {
-                //MessageBox.Show($"Double type choisit : {SelectedFirstType.Label} - {SelectedSecondType.Label}");
-                Pokemon pkmn1 = new Pokemon(SelectedFirstType.Value);
-                Pokemon pkmn2 = new Pokemon(SelectedSecondType.Value);
-                var weaksForTypeOne = GetFirstTypeEffictivityVsAllType(pkmn1);
-                var weaksForTypeTwo = GetFirstTypeEffictivityVsAllType(pkmn2);
-                var resistanceForTypeOne = GetFirstTypeNoneffictivityVsAllType(pkmn1);
-                var resistanceForTypeTwo = GetFirstTypeNoneffictivityVsAllType(pkmn2);
-                //var resistanceForTypeOne = FiltrerTypeFaiblesEtResistant(weaksForTypeTwo, GetFirstTypeNoneffictivityVsAllType(pkmn1));
-                //var resistanceForTypeTwo = FiltrerTypeFaiblesEtResistant(weaksForTypeOne, GetFirstTypeNoneffictivityVsAllType(pkmn2));
-                foreach (var weak in weaksForTypeOne)
+                DefensiveResistingTypesList.Add(new TypeDisplayItem
                 {
-                    FirstTypeWeakTypes.Add(new TypeDisplayItem
+                    Name = $"{resistance.PkmnTypeName}"
+                });
+            }
+            */
+            foreach (var doubleResistingType in allDoubleResistingTypes)
+            {
+                ResistingDoubleTypes.Add(new TypeDisplayItem
+                {
+                    Name = $"{doubleResistingType.Type1.PkmnTypeName} / {doubleResistingType.Type2.PkmnTypeName}"
+                });
+            }
+            foreach (var doubleWeaknessType in allDoubleWeakTypes)
+            {
+                WeakDoubleTypes.Add(new TypeDisplayItem
+                {
+                    Name = $"{doubleWeaknessType.Type1.PkmnTypeName} / {doubleWeaknessType.Type2.PkmnTypeName}"
+                });
+            }
+            if (allResistedTypesTest != null)
+            {
+                foreach (var resistedTypes in allResistedTypesTest)
+                {
+                    FirstTypeAllResistingTypes.Add(new TypeDisplayItem
                     {
-                        Name = $"{weak.PkmnTypeName}"
+                        Name = $"{resistedTypes.PkmnTypeName}"
                     });
                 }
-                foreach (var weak in weaksForTypeTwo)
+            }
+            else
+            {
+                FirstTypeAllResistingTypes.Add(new TypeDisplayItem
                 {
-                    FirstTypeWeakTypes.Add(new TypeDisplayItem
-                    {
-                        Name = $"{weak.PkmnTypeName}"
-                    });
-                }
-                foreach (var resistance in resistanceForTypeOne)
-                {
-                    FirstTypeResistingTypes.Add(new TypeDisplayItem
-                    {
-                        Name = $"{resistance.PkmnTypeName}"
-                    });
-                }
-                foreach (var resistance in resistanceForTypeTwo)
-                {
-                    FirstTypeResistingTypes.Add(new TypeDisplayItem
-                    {
-                        Name = $"{resistance.PkmnTypeName}"
-                    });
-                }
-                
-            }*/
+                    Name = $"Rien"
+                });
+            }
+
+            /*
+            Account = doubleResistingTypes.Count;
+            */
         }
-        
+
+        //------------------------------ Autres methodes
         public static List<PkmnType> GetAllPkmnOffensiveTypeEffictivityVsAllType(Pokemon onePkmn)
         {
             var allTypes = GetAllTypes();
             List<PkmnType> allWeakTypes = new List<PkmnType>();
             var firstType = onePkmn.Type1;
             var secondType = onePkmn.Type2;
-            if(secondType == null)
+            if (secondType == null)
             {
                 for (int i = 0; i < allTypes.Count; i++)
                 {
@@ -268,7 +327,8 @@ namespace WpfPkmn.ViewModels
                         allWeakTypes.Add(allTypes[i]);
                     }
                 }
-            } else
+            }
+            else
             {
                 for (int i = 0; i < allTypes.Count; i++)
                 {
@@ -340,194 +400,6 @@ namespace WpfPkmn.ViewModels
 
             return allWeakTypes;
         }
-
-        //Bouton qui affiche les simples types qui sont faibles et resistants a un type/double type donné
-        private bool CanExecuteDisplayPkmnResistancesAction(object obj)
-        {
-            return (SelectedFirstType != null);
-        }
-
-        private void ExecuteDisplayPkmnResistancesAction(object obj)
-        {
-            DefensiveWeakTypesList.Clear();
-            DefensiveResistingTypesList.Clear();
-            ResistingDoubleTypes.Clear();
-            WeakDoubleTypes.Clear();
-            Account = 0;
-
-            Pokemon myPkmn;
-
-            if (SelectedSecondType == null || SelectedSecondType.Label == "Aucun")
-            {
-                myPkmn = new Pokemon(SelectedFirstType.Value);
-            }
-            else if (SelectedFirstType.Value == SelectedSecondType.Value)
-            {
-                myPkmn = new Pokemon(SelectedFirstType.Value);
-            } else
-            {
-                myPkmn = new Pokemon(SelectedFirstType.Value, SelectedSecondType.Value);
-            }
-            var allWeaksForPkmn = GetAllPkmnOffensiveTypeEffictivityVsAllType(myPkmn);
-            var allResistanceForPkmn = GetAllPkmnOffensiveTypeNoneEffictivityVsAllType(myPkmn);
-            var allDoubleResistingTypes = GetAllResistingDoubleTypes(myPkmn);
-            var allDoubleWeakTypes = GetAllWeakDoubleTypes(myPkmn);
-
-            foreach (var weakness in allWeaksForPkmn)
-            {
-                DefensiveWeakTypesList.Add(new TypeDisplayItem
-                {
-                    Name = $"{weakness.PkmnTypeName}"
-                });
-            }
-            if(allResistanceForPkmn.Count > 0)
-            {
-                foreach (var resistance in allResistanceForPkmn)
-                {
-                    DefensiveResistingTypesList.Add(new TypeDisplayItem
-                    {
-                        Name = $"{resistance.PkmnTypeName}"
-                    });
-                }
-            } else
-            {
-                DefensiveResistingTypesList.Add(new TypeDisplayItem
-                {
-                    Name = $"Rien"
-                });
-            }
-            /*
-            foreach (var resistance in allResistanceForPkmn)
-            {
-                DefensiveResistingTypesList.Add(new TypeDisplayItem
-                {
-                    Name = $"{resistance.PkmnTypeName}"
-                });
-            }
-            */
-            foreach (var doubleResistingType in allDoubleResistingTypes)
-            {
-                ResistingDoubleTypes.Add(new TypeDisplayItem
-                {
-                    Name = $"{doubleResistingType.Type1.PkmnTypeName} / {doubleResistingType.Type2.PkmnTypeName}"
-                });
-            }
-            foreach(var doubleWeaknessType in allDoubleWeakTypes)
-            {
-                WeakDoubleTypes.Add(new TypeDisplayItem
-                {
-                    Name = $"{doubleWeaknessType.Type1.PkmnTypeName} / {doubleWeaknessType.Type2.PkmnTypeName}"
-                });
-            }
-
-            /*
-            Account = doubleResistingTypes.Count;
-            */
-        }
-
-        //Autres methodes
-        public static List<PkmnType> GetSimpleResistances(Pokemon onePkmn)
-        {
-            var allTypes = GetAllTypes();
-            List<PkmnType> simpleResistancesList = new List<PkmnType>();
-
-            if(onePkmn.Type2 == null)
-            {
-                for (int i = 0; i < allTypes.Count; i++)
-                {
-                    Pokemon pkmnTest = new Pokemon(allTypes[i]);
-                    double effictiveness = pkmnTest.GetEffectiveness(onePkmn.Type1);
-                    if(effictiveness < 1)
-                    {
-                        simpleResistancesList.Add(allTypes[i]);
-                    } 
-                    //MessageBox.Show($"Efficacite de {onePkmn.Type1.PkmnTypeName} sur {allTypes[i].PkmnTypeName} = {effictiveness}");
-                    // Donne l'efficacite d'un type sur 1 pkmn
-                }
-            } else
-            {
-                for (int i = 0; i < allTypes.Count; i++)
-                {
-                    Pokemon pkmnTest = new Pokemon(allTypes[i]);
-                    double effictiveness1 = pkmnTest.GetEffectiveness(onePkmn.Type1);
-                    double effictiveness2 = pkmnTest.GetEffectiveness(onePkmn.Type2);
-                    double effictiveness;
-                    if (effictiveness1 >= effictiveness2)
-                    {
-                        effictiveness = effictiveness1;
-                    } else if(effictiveness1 < effictiveness2)
-                    {
-                        effictiveness = effictiveness2;
-                    } else
-                    {
-                        effictiveness = effictiveness1;
-                        MessageBox.Show($"Valeur 1 : {effictiveness1}, Valeur 2 : {effictiveness2}, Resultat : {effictiveness}");
-                    }
-                    if (effictiveness < 1)
-                    {
-                        simpleResistancesList.Add(allTypes[i]);
-                    }
-                    //MessageBox.Show($"Efficacite de {onePkmn.Type1.PkmnTypeName} / {onePkmn.Type2.PkmnTypeName} sur {allTypes[i].PkmnTypeName} = {effictiveness1}");
-                    // Donne l'efficacite d'un type sur 1 pkmn
-                }
-            }
-
-                return simpleResistancesList;
-        }
-        public static List<PkmnType> GetSimpleWeaknesses(Pokemon onePkmn)
-        {
-            var allTypes = GetAllTypes();
-            List<PkmnType> simpleResistancesList = new List<PkmnType>();
-            //Pokemon sousPkmn = new Pokemon(onePkmn.Type1);
-
-            if (onePkmn.Type2 == null)
-            {
-                //var weaksForTypeOne = GetFirstTypeEffictivityVsAllType(onePkmn.Type1);
-                /*
-                for (int i = 0; i < allTypes.Count; i++)
-                {
-                    Pokemon pkmnTest = new Pokemon(allTypes[i]);
-                    double effictiveness = pkmnTest.GetEffectiveness(onePkmn.Type1);
-                    if (effictiveness > 1)
-                    {
-                        simpleResistancesList.Add(allTypes[i]);
-                    }
-                    //MessageBox.Show($"Efficacite de {onePkmn.Type1.PkmnTypeName} sur {allTypes[i].PkmnTypeName} = {effictiveness}");
-                    // Donne l'efficacite d'un type sur 1 pkmn
-                }
-                */
-            }
-            else
-            {
-                for (int i = 0; i < allTypes.Count; i++)
-                {
-                    Pokemon pkmnTest = new Pokemon(allTypes[i]);
-                    double effictiveness1 = pkmnTest.GetEffectiveness(onePkmn.Type1);
-                    double effictiveness2 = pkmnTest.GetEffectiveness(onePkmn.Type2);
-                    double effictiveness;
-                    if (effictiveness1 == 0)
-                    {
-                        effictiveness = effictiveness2;
-                    }
-                    else if (effictiveness2 == 0)
-                    {
-                        effictiveness = effictiveness1;
-                    }
-                    else
-                    {
-                        effictiveness = effictiveness1 * effictiveness2;
-                    }
-                    if (effictiveness > 1)
-                    {
-                        simpleResistancesList.Add(allTypes[i]);
-                    }
-                    //MessageBox.Show($"Efficacite de {onePkmn.Type1.PkmnTypeName} / {onePkmn.Type2.PkmnTypeName} sur {allTypes[i].PkmnTypeName} = {effictiveness1}");
-                    // Donne l'efficacite d'un type sur 1 pkmn
-                }
-            }
-
-            return simpleResistancesList;
-        }
         public static List<Pokemon> GetAllResistingDoubleTypes(Pokemon onePkmn)
         {
             var allTypes = GetAllTypes();
@@ -562,19 +434,6 @@ namespace WpfPkmn.ViewModels
                 }
             }
             
-            /*
-            if(onePkmn.Type2 != null)
-            {
-                double effictiveness1 = pkmnTest.GetEffectiveness(onePkmn.Type1);
-                double effictiveness2 = pkmnTest.GetEffectiveness(onePkmn.Type2);
-                MessageBox.Show($"Resultat de {onePkmn.Type1.PkmnTypeName} / {onePkmn.Type2.PkmnTypeName} : {effictiveness1}, {effictiveness2}");
-                if(effictiveness1 < 1 && effictiveness2 < 1 )
-                {
-                    allDoubleTypeResistancesList.Add(pkmnTest);
-                }
-            }*/
-
-
             return allDoubleTypeResistancesList;
         }
         public static List<Pokemon> GetAllWeakDoubleTypes(Pokemon onePkmn)
@@ -611,21 +470,43 @@ namespace WpfPkmn.ViewModels
                 }
             }
 
-            /*
-            if(onePkmn.Type2 != null)
-            {
-                double effictiveness1 = pkmnTest.GetEffectiveness(onePkmn.Type1);
-                double effictiveness2 = pkmnTest.GetEffectiveness(onePkmn.Type2);
-                MessageBox.Show($"Resultat de {onePkmn.Type1.PkmnTypeName} / {onePkmn.Type2.PkmnTypeName} : {effictiveness1}, {effictiveness2}");
-                if(effictiveness1 < 1 && effictiveness2 < 1 )
-                {
-                    allDoubleTypeResistancesList.Add(pkmnTest);
-                }
-            }*/
-
-
             return allDoubleTypeWeaknessesList;
         }
+        //------------------------------ Tests 
+        public static List<PkmnType> GetAllPkmnDefensiveTypeEffictivityVsAllType(Pokemon onePkmn)
+        {
+            // Si un type est defavorable (pas tres efficace c'est que notre type choisit est efficace defensivement
+            // contre lui
+            var allTypes = GetAllTypes();
+            List<PkmnType> allDefensiveTypeResistanceList = new List<PkmnType>();
+            var firstType = onePkmn.Type1;
+            var secondType = onePkmn.Type2;
+            if(secondType == null)
+            {
+                for (int i = 0; i < allTypes.Count; i++)
+                {
+                    double effectivenessScoreVsChosenType = allTypes[i].GetEffectivenessAgainst(firstType);
+                    if (effectivenessScoreVsChosenType < 1)
+                    {
+                        allDefensiveTypeResistanceList.Add(allTypes[i]);
+                    }
+                }
+            } else
+            {
+                for (int i = 0; i < allTypes.Count; i++)
+                {
+                    double effectivenessScoreVsChosenType1 = allTypes[i].GetEffectivenessAgainst(firstType);
+                    double effectivenessScoreVsChosenType2 = allTypes[i].GetEffectivenessAgainst(secondType);
+                    double totalEffectivenessVsOurPkmn = effectivenessScoreVsChosenType1 * effectivenessScoreVsChosenType2;
+                    if (totalEffectivenessVsOurPkmn < 1)
+                    {
+                        allDefensiveTypeResistanceList.Add(allTypes[i]);
+                    }
+                }
+            }
+            return allDefensiveTypeResistanceList;
+        }
+
         public class TypeDisplayItem
         {
             public string Name { get; set; }
@@ -801,6 +682,108 @@ namespace WpfPkmn.ViewModels
                 }
             }
             return allFiltredResistingTypeList;
+        }
+        public static List<PkmnType> GetSimpleResistances(Pokemon onePkmn)
+        {
+            var allTypes = GetAllTypes();
+            List<PkmnType> simpleResistancesList = new List<PkmnType>();
+
+            if(onePkmn.Type2 == null)
+            {
+                for (int i = 0; i < allTypes.Count; i++)
+                {
+                    Pokemon pkmnTest = new Pokemon(allTypes[i]);
+                    double effictiveness = pkmnTest.GetEffectiveness(onePkmn.Type1);
+                    if(effictiveness < 1)
+                    {
+                        simpleResistancesList.Add(allTypes[i]);
+                    } 
+                    //MessageBox.Show($"Efficacite de {onePkmn.Type1.PkmnTypeName} sur {allTypes[i].PkmnTypeName} = {effictiveness}");
+                    // Donne l'efficacite d'un type sur 1 pkmn
+                }
+            } else
+            {
+                for (int i = 0; i < allTypes.Count; i++)
+                {
+                    Pokemon pkmnTest = new Pokemon(allTypes[i]);
+                    double effictiveness1 = pkmnTest.GetEffectiveness(onePkmn.Type1);
+                    double effictiveness2 = pkmnTest.GetEffectiveness(onePkmn.Type2);
+                    double effictiveness;
+                    if (effictiveness1 >= effictiveness2)
+                    {
+                        effictiveness = effictiveness1;
+                    } else if(effictiveness1 < effictiveness2)
+                    {
+                        effictiveness = effictiveness2;
+                    } else
+                    {
+                        effictiveness = effictiveness1;
+                        MessageBox.Show($"Valeur 1 : {effictiveness1}, Valeur 2 : {effictiveness2}, Resultat : {effictiveness}");
+                    }
+                    if (effictiveness < 1)
+                    {
+                        simpleResistancesList.Add(allTypes[i]);
+                    }
+                    //MessageBox.Show($"Efficacite de {onePkmn.Type1.PkmnTypeName} / {onePkmn.Type2.PkmnTypeName} sur {allTypes[i].PkmnTypeName} = {effictiveness1}");
+                    // Donne l'efficacite d'un type sur 1 pkmn
+                }
+            }
+
+                return simpleResistancesList;
+        }
+        public static List<PkmnType> GetSimpleWeaknesses(Pokemon onePkmn)
+        {
+            var allTypes = GetAllTypes();
+            List<PkmnType> simpleResistancesList = new List<PkmnType>();
+            //Pokemon sousPkmn = new Pokemon(onePkmn.Type1);
+
+            if (onePkmn.Type2 == null)
+            {
+                //var weaksForTypeOne = GetFirstTypeEffictivityVsAllType(onePkmn.Type1);
+                /*
+                for (int i = 0; i < allTypes.Count; i++)
+                {
+                    Pokemon pkmnTest = new Pokemon(allTypes[i]);
+                    double effictiveness = pkmnTest.GetEffectiveness(onePkmn.Type1);
+                    if (effictiveness > 1)
+                    {
+                        simpleResistancesList.Add(allTypes[i]);
+                    }
+                    //MessageBox.Show($"Efficacite de {onePkmn.Type1.PkmnTypeName} sur {allTypes[i].PkmnTypeName} = {effictiveness}");
+                    // Donne l'efficacite d'un type sur 1 pkmn
+                }
+                
+    }
+            else
+            {
+                for (int i = 0; i<allTypes.Count; i++)
+                {
+                    Pokemon pkmnTest = new Pokemon(allTypes[i]);
+    double effictiveness1 = pkmnTest.GetEffectiveness(onePkmn.Type1);
+    double effictiveness2 = pkmnTest.GetEffectiveness(onePkmn.Type2);
+    double effictiveness;
+                    if (effictiveness1 == 0)
+                    {
+                        effictiveness = effictiveness2;
+                    }
+                    else if (effictiveness2 == 0)
+{
+    effictiveness = effictiveness1;
+}
+else
+{
+    effictiveness = effictiveness1 * effictiveness2;
+}
+if (effictiveness > 1)
+{
+    simpleResistancesList.Add(allTypes[i]);
+}
+                    //MessageBox.Show($"Efficacite de {onePkmn.Type1.PkmnTypeName} / {onePkmn.Type2.PkmnTypeName} sur {allTypes[i].PkmnTypeName} = {effictiveness1}");
+                    // Donne l'efficacite d'un type sur 1 pkmn
+                }
+            }
+
+            return simpleResistancesList;
         }
         */
     }
